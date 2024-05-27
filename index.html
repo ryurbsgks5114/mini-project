@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main</title>
+    <link rel="stylesheet" href="./css/index.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="main-header-container">
+            <h1>오브젝트</h1>
+            <nav>
+                <ul id="mainNav">
+                    <li id="userIntro">
+                        <a>팀원 소개</a>
+                    </li>
+                    <li id="teamIntro">
+                        <a>팀 소개</a>
+                    </li>
+                    <li id="guestBook">
+                        <a>방명록</a>
+                    </li>
+                    <li>
+                        <a href="./write.html">소개하기</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="section-member">
+            <ul id="card"></ul>
+        </section>
+    </main>
+
+    <div id="scroll" class="scroll-icon">
+        <img alt="..." src="./svg/chevron-up-solid.svg" />
+    </div>
+
+    <section class="section-team">
+        <div class="section-team-container">
+            <div class="section-team-container-section border-top-01">
+                <h1>팀 소개</h1>
+                <div>
+                    <ul>
+                        <li>오브젝트인줄 알았지만 오브젝T인 건에 대하여</li>
+                        <li>
+                            <div class="section-team-img">Ţ</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section-team-container-section border-top-02">
+                <h1>팀 목표</h1>
+                <div>
+                    <ul>
+                        <li>목표했던 기능 다 구현하기</li>
+                        <li>기능 구현에 에러 생기지 않기</li>
+                        <li>모르는거 넘어가지 않고 질문하기</li>
+                        <li>튜터님들 한테 적극적으로 질문하기</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section-team-container-section border-top-03">
+                <h1>팀 규칙</h1>
+                <div>
+                    <ul>
+                        <li>들어오면 항상 인사하기</li>
+                        <li>회의 시간 늦지 않기</li>
+                        <li>출석에 이상이 생기면 미리 알려주기</li>
+                        <li>자리를 비워야할 때 팀원에게 말하기</li>
+                        <li></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-guest">
+        <div class="section-guest-container">
+            <div class="section-guest-container-flex">
+                <div>
+                    <label for="name" class="section-guest-lable1">이름</label>
+                    <input id="name" type="text" placeholder="이름" />
+                    <label for="pw" class="section-guest-lable2">비밀번호</label>
+                    <input id="pw" type="password" placeholder="비밀번호" />
+                </div>
+                <div>
+                    <label for="comment" class="section-guest-lable1">방명록</label>
+                    <textarea id="comment" placeholder="방명록을 입력해주세요"></textarea>
+                </div>
+            </div>
+            <div class="section-guest-container-btn">
+                <button id="registerBtn" class="section-guest-container-btn-add">등록하기</button>
+            </div>
+        </div>
+
+        <ul id="guestList" class="section-guest-list"></ul>
+    </section>
+
+    <script type="module">
+        // Firebase SDK 라이브러리 가져오기
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { query, where, orderBy, doc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // Firebase 구성정보 설정
+        const firebaseConfig = {
+
+            apiKey: "AIzaSyB3ookWJ_UhcAQN3g_GFe8igPGrRhhSEPM",
+            authDomain: "object-4dce6.firebaseapp.com",
+            projectId: "object-4dce6",
+            storageBucket: "object-4dce6.appspot.com",
+            messagingSenderId: "1016569423981",
+            appId: "1:1016569423981:web:4742c10d53bc9ad4ef7764",
+            measurementId: "G-2ND0Q8WYC3"
+
+        };
+
+        // Firebase 인스턴스 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        history.scrollRestoration = "manual";
+
+        function getDateFormat() {
+
+            let now = new Date();
+            let year = now.getFullYear();
+            let month = now.getMonth() + 1 < 10 ? `0${now.getMonth() + 1}` : now.getMonth() + 1;
+            let date = now.getDate() < 10 ? `0${now.getDate()}` : now.getDate();
+            let hours = now.getHours() < 10 ? `0${now.getHours()}` : now.getHours();
+            let min = now.getMinutes() < 10 ? `0${now.getMinutes()}` : now.getMinutes();
+            let sec = now.getSeconds() < 10 ? `0${now.getSeconds()}` : now.getSeconds();
+            let today = `${year}-${month}-${date}`;
+            let id = `${year}${month}${date}${hours}${min}${sec}`;
+
+            return [today, id];
+        }
+
+        function scrollSmooth(destination, duration) {
+
+            let start = window.scrollY || window.pageYOffset;
+            let distance = destination - start;
+            let startTime = null;
+
+            function scrollTo(timestamp) {
+                if (!startTime) {
+                    startTime = timestamp;
+                }
+
+                let progress = timestamp - startTime;
+                let percentComplete = Math.min(progress / duration, 1);
+
+                window.scrollTo(0, start + distance * percentComplete);
+
+                if (progress < duration) {
+                    window.requestAnimationFrame(scrollTo);
+                }
+
+            }
+
+            window.requestAnimationFrame(scrollTo);
+        }
+
+        $("#scroll").on("click", function () {
+            window.scrollTo(0, 0);
+        });
+
+        $("#mainNav > li").on("click", function () {
+
+            let listID = $(this).attr("id");
+            let menuHeight = document.querySelector("body > header").offsetHeight;
+            let location;
+
+            switch (listID) {
+                case "userIntro":
+                    location = document.querySelector("body > main > section > ul").offsetTop;
+                    scrollSmooth(location - menuHeight, 1000);
+
+                    break;
+                case "teamIntro":
+                    location = document.querySelector("body > section.section-team > div").offsetTop;
+                    scrollSmooth(location - menuHeight, 1000);
+
+                    break;
+                case "guestBook":
+                    location = document.querySelector("body > section.section-guest > div").offsetTop;
+                    scrollSmooth(location - menuHeight, 1000);
+
+                    break;
+            }
+
+        });
+        // //Firebase에서 게시물 정보 가져와서 게시물 붙이기
+        let newDoc = await getDocs(collection(db, "post"));
+        newDoc.forEach((doc) => {
+            let row = doc.data();
+            let img = row['img'];
+            let name = row['name'];
+            let mbti = row['mbti'];
+            let date = row['date'];
+            let word = row['word'];
+            let intro = row['intro'];
+            let github = row['github'];
+            let blog = row['blog'];
+            let id = row['id'];
+
+            // <li>태그 사용 시 <Ul>태그에 id=""값 주기!!
+            let temp_html = `
+            
+            <li id=${id} class="section-member-card">
+                <div>
+                        <div class="section-member-card-img">
+                            <img alt="..." src="${img}" />
+                        </div>
+                        <div class="section-member-card-member">
+                            <div class="section-member-card-member-info">
+                                <div class="section-member-card-member-info-name">${name}</div>
+                                <span class="side-margin10">·</span>
+                                <div class="section-member-card-member-info-mbti">${mbti}</div>
+                            </div>
+                            <div class="section-member-card-member-date">${date}</div>
+                        </div>
+                        <div class="section-member-card-intro">
+                            <div class="section-member-card-intro-word">${word}</div>
+                            <div class="section-member-card-intro-intro">${intro}
+                                
+                            </div>
+                        </div> 
+                    </div> 
+                    <div class="section-member-card-site">
+                        <div class="newtest"><a>${github}/</a></div>
+                        <div><a>${blog}</a></div>
+                    </div>
+                    </div>
+                    </li>`;
+
+            $('#card ').append(temp_html);
+        })
+        $(document).ready(function () {
+            $('#card li').on('click', function () {
+                // 클릭한 li의 id 값을 가져옵니다.
+                var clickedId = $(this).attr('id');
+
+                if (clickedId) {
+                    const newUrl = `./show.html?id=${clickedId}`;
+                    window.location.href = newUrl;
+                } else {
+                    console.log('ID 값이 없습니다.');
+                }
+            });
+        });
+
+        const q = query(collection(db, "guest"), orderBy("id"));
+        let guestList = await getDocs(q);
+
+        guestList.forEach((el) => {
+
+            let data = el.data();
+
+            let html = `<li id=${data.id}>
+                <div class="section-guest-list-container">
+                    <div class="section-guest-list-container-flex">
+                        <div class="section-guest-list-name">${data.name}</div>
+                        <span class="side-margin10">·</span>
+                        <div class="section-guest-list-date">${data.date}</div>
+                        <button type="button">삭제</button>
+                    </div>
+                    <div class="section-guest-list-content">
+                        ${data.comment}
+                    </div>
+                    <div class="main-guest-modal">
+                        <div>
+                          <input type="password" placeholder="비밀번호를 입력해주세요" />
+                        </div>
+                        <div class="main-guest-modal-flex">
+                          <button id="guestModalCancle" class="main-guest-modal-cancle">취소</button>
+                          <button id="guestModalCheck" class="main-guest-modal-check">확인</button>
+                        </div>
+                    </div>
+                </div>
+            </li>`;
+
+            $("#guestList").append(html);
+
+        });
+
+        $("#registerBtn").on("click", async function () {
+
+            let name = $("#name").val();
+            let pw = $("#pw").val();
+            let comment = $("#comment").val();
+
+            if (!name || !comment || !pw) {
+                alert("이름, 비밀번호, 방명록을 모두 입력해주세요");
+
+                return
+            }
+
+            let [date, id] = getDateFormat();
+            let data = {
+                "id": id,
+                "pw": pw,
+                "name": name,
+                "comment": comment,
+                "date": date,
+            };
+
+            await setDoc(doc(db, "guest", id), data);
+
+            let html = `<li id=${data.id}>
+                <div class="section-guest-list-container">
+                    <div class="section-guest-list-container-flex">
+                        <div class="section-guest-list-name">${data.name}</div>
+                        <span class="side-margin10">·</span>
+                        <div class="section-guest-list-date">${data.date}</div>
+                        <button type="button">삭제</button>
+                    </div>
+                    <div class="section-guest-list-content">
+                        ${data.comment}
+                    </div>
+                    <div class="main-guest-modal">
+                        <div>
+                          <input type="password" placeholder="비밀번호를 입력해주세요" />
+                        </div>
+                        <div class="main-guest-modal-flex">
+                          <button id="guestModalCancle" class="main-guest-modal-cancle">취소</button>
+                          <button id="guestModalCheck" class="main-guest-modal-check">확인</button>
+                        </div>
+                    </div>
+                </div>
+            </li>`;
+
+            $("#guestList").append(html);
+            $("#name").val("");
+            $("#pw").val("");
+            $("#comment").val("");
+
+            $("#guestList > li div.section-guest-list-container-flex > button").on("click", function () {
+                $(this).parent().parent().find(".main-guest-modal").show();
+                $("#guestList > li div.section-guest-list-container-flex > button").attr("disabled", true);
+
+                $(this).parent().parent().find(".main-guest-modal > div.main-guest-modal-flex > button.main-guest-modal-cancle").on("click", function () {
+                    $(this).parent().parent().hide();
+                    $("#guestList > li div.section-guest-list-container-flex > button").attr("disabled", false);
+                });
+
+                $(this).parent().parent().find(".main-guest-modal > div.main-guest-modal-flex > button.main-guest-modal-check").on("click", async function () {
+
+                    let pw = $(this).parent().parent().find("input").val();
+                    let id = $(this).parent().parent().parent().parent().attr("id");
+
+                    if (!pw) {
+                        alert("비밀번호를 입력해주세요");
+
+                        return
+                    }
+
+                    let check = false;
+                    const q = query(
+                        collection(db, "guest"),
+                        where("id", "==", id),
+                        where("pw", "==", pw)
+                    );
+                    let result = await getDocs(q);
+
+                    result.forEach((el) => {
+                        if (el.data()) {
+                            check = true;
+                        }
+                    });
+
+                    if (!check) {
+                        alert("비밀번호가 일치하지 않습니다");
+
+                        return
+                    }
+
+                    await deleteDoc(doc(db, "guest", id));
+                    $(this).parent().parent().parent().parent().remove();
+
+                });
+
+            });
+
+        });
+
+        $("#guestList > li div.section-guest-list-container-flex > button").on("click", function () {
+            $(this).parent().parent().find(".main-guest-modal").show();
+            $("#guestList > li div.section-guest-list-container-flex > button").attr("disabled", true);
+
+            $(this).parent().parent().find(".main-guest-modal > div.main-guest-modal-flex > button.main-guest-modal-cancle").on("click", function () {
+                $(this).parent().parent().hide();
+                $("#guestList > li div.section-guest-list-container-flex > button").attr("disabled", false);
+            });
+
+            $(this).parent().parent().find(".main-guest-modal > div.main-guest-modal-flex > button.main-guest-modal-check").on("click", async function () {
+
+                let pw = $(this).parent().parent().find("input").val();
+                let id = $(this).parent().parent().parent().parent().attr("id");
+
+                if (!pw) {
+                    alert("비밀번호를 입력해주세요");
+
+                    return
+                }
+
+                let check = false;
+                const q = query(
+                    collection(db, "guest"),
+                    where("id", "==", id),
+                    where("pw", "==", pw)
+                );
+                let result = await getDocs(q);
+
+                result.forEach((el) => {
+                    if (el.data()) {
+                        check = true;
+                    }
+                });
+
+                if (!check) {
+                    alert("비밀번호가 일치하지 않습니다");
+
+                    return
+                }
+
+                await deleteDoc(doc(db, "guest", id));
+                $(this).parent().parent().parent().parent().remove();
+
+            });
+
+        });
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="./css/write.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+  <header>
+    <h2>팀원을 소개해주세요</h2>
+  </header>
+  <main>
+    <form name="postform">
+      <div class="write-flex">
+        <div class="write-container">
+          <label for="name">이름</label>
+          <input id="name" class="write-container-space250" type="text" placeholder="이름을 입력해주세요" />
+        </div>
+        <div class="write-container side-margin50">
+          <label for="pw">비밀번호</label>
+          <input id="pw" class="write-container-space280" type="password" placeholder="비밀번호를 입력해주세요" />
+        </div>
+        <div class="write-container">
+          <label for="mbti">MBTI</label>
+          <input id="mbti" class="write-container-space130" type="text" placeholder="MBTI" />
+        </div>
+      </div>
+      <div class="write-container-img">
+        <label for="img">사진</label>
+        <input id="img" class="write-container-input-file" type="file" accept="image/*" />
+        <div class="write-container-thumbnail">
+          <img id="thumbnail" alt="..." src="./svg/image-regular.svg" />
+        </div>
+      </div>
+      <div class="write-container">
+        <label for="blog">블로그 주소</label>
+        <input id="blog" class="write-container-space500" type="text" placeholder="블로그 주소를 입력해주세요" />
+      </div>
+      <div class="write-container">
+        <label for="github">깃허브 주소</label>
+        <input id="github" class="write-container-space500" type="text" placeholder="깃허브 주소를 입력해주세요" />
+      </div>
+      <div class="write-container">
+        <label for="word">한마디</label>
+        <input id="word" class="write-container-spaceAll" type="text" placeholder="한마디를 적어주세요" />
+      </div>
+      <div class="write-container">
+        <label for="intro">자기소개</label>
+        <textarea id="intro" placeholder="자기소개를 적어주세요"></textarea>
+      </div>
+      <div class="write-footer">
+        <button id="introBtn" class="write-footer-introBtn" type="button">소개하기</button>
+        <button id="cancleBtn" class="write-footer-cancleBtn" type="button"
+          onClick="location.href='index.html'">취소</button>
+      </div>
+    </form>
+  </main>
+
+  <script type="module">
+
+    $("#thumbnail").on("click", function () {
+      $("#img").click();
+    })
+  
+    // Firebase SDK 라이브러리 가져오기
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+    import { query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+  
+    // Firebase 구성 정보 설정
+    const firebaseConfig = {
+      apiKey: "AIzaSyB3ookWJ_UhcAQN3g_GFe8igPGrRhhSEPM",
+      authDomain: "object-4dce6.firebaseapp.com",
+      projectId: "object-4dce6",
+      storageBucket: "object-4dce6.appspot.com",
+      messagingSenderId: "1016569423981",
+      appId: "1:1016569423981:web:4742c10d53bc9ad4ef7764",
+      measurementId: "G-2ND0Q8WYC3"
+    };
+  
+    // Firebase 인스턴스 초기화
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+  
+    $("#introBtn").click(async function () {
+      var name = $('#name').val().trim();
+      var pw = $('#pw').val().trim();
+      var mbti = $('#mbti').val().trim();
+      var blog = $('#blog').val().trim();
+      var github = $('#github').val().trim();
+      var word = $('#word').val().trim();
+      var intro = $('#intro').val().trim();
+  
+      function getDateFormat() {
+  
+        let now = new Date();
+        let year = now.getFullYear();
+        let month = now.getMonth() + 1 < 10 ? `0${now.getMonth() + 1}` : now.getMonth() + 1;
+        let date = now.getDate() < 10 ? `0${now.getDate()}` : now.getDate();
+        let hours = now.getHours() < 10 ? `0${now.getHours()}` : now.getHours();
+        let min = now.getMinutes() < 10 ? `0${now.getMinutes()}` : now.getMinutes();
+        let sec = now.getSeconds() < 10 ? `0${now.getSeconds()}` : now.getSeconds();
+        let today = `${year}-${month}-${date}`;
+        let id = `${year}${month}${date}${hours}${min}${sec}`;
+  
+        return [today, id];
+      }
+  
+      let [date, id] = getDateFormat();
+  
+      // 이미지 파일 가져오기
+      var file = $("#img").prop("files")[0];
+  
+      // 유효성 검사
+      if (name === "" || pw === "" || mbti === "" || file === undefined || blog === "" || github === "" || word === "" || intro === "") {
+        alert("빈칸을 입력해주세요.");
+        return;
+      }
+      // 이미지 파일을 Firebase Storage에 업로드
+      const storageRef = ref(storage, `images/${id}`);
+      await uploadBytes(storageRef, file);
+  
+      // 업로드한 이미지의 다운로드 URL 가져오기
+      const imgUrl = await getDownloadURL(storageRef);
+  
+      // Firestore에 데이터 추가
+      try {
+        await setDoc(doc(db, "post", id), {
+          name: name,
+          pw: pw,
+          mbti: mbti,
+          img: imgUrl,
+          blog: blog,
+          github: github,
+          word: word,
+          intro: intro,
+          id: id,
+          date: date
+        });
+        alert('저장 완료');
+        location.href = "./index.html";
+      } catch (error) {
+        console.error("Error adding document: ", error);
+      }
+    })
+  
+    // 이미지 파일 미리보기
+    $("#img").on("change", function (event) {
+      var file = event.target.files[0];
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        $("#thumbnail").attr("src", e.target.result);
+      }
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>

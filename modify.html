@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수정페이지</title>
+    <link rel="stylesheet" href="./css/write.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> <!-- JQuery Import -->
+</head>
+
+<body>
+
+    <header>
+        <h1>수정 페이지</h1>
+    </header>
+
+    <main>
+
+        <div class="write-flex">
+
+            <div class="write-container">
+                <label for="name">이름</label>
+                <input id="name" class="write-container-space250" type="text" placeholder="이름을 입력해주세요" />
+            </div>
+
+            <div class="write-container side-margin50">
+                <label for="mbti">MBTI</label>
+                <input id="mbti" class="write-container-space130" type="text" placeholder="MBTI" />
+            </div>
+
+        </div>
+
+        <div class="write-container-img">
+            <label for="img">사진</label>
+            <input id="img" class="write-container-input-file" type="file" accept="image/*" />
+            <div class="write-container-thumbnail">
+                <img id="thumbnail" alt="..." src="" />
+            </div>
+        </div>
+
+        <div class="write-container">
+            <label for="blog">블로그 주소</label>
+            <input id="blog" class="write-container-space500" type="text" placeholder="블로그 주소를 입력해주세요" />
+        </div>
+
+        <div class="write-container">
+            <label for="github">깃허브 주소</label>
+            <input id="github" class="write-container-space500" type="text" placeholder="깃허브 주소를 입력해주세요" />
+        </div>
+
+        <div class="write-container">
+            <label for="word">한마디</label>
+            <input id="word" class="write-container-spaceAll" type="text" placeholder="한마디를 적어주세요" />
+        </div>
+
+        <div class="write-container">
+            <label for="intro">자기소개</label>
+            <textarea id="intro" placeholder="자기소개를 적어주세요"></textarea>
+        </div>
+
+        <div class="write-footer">
+            <button id="writeBtn" class="write-footer-introBtn" type="button">수정</button>
+            <button id="cancelBtn" class="write-footer-cancleBtn" type="button">취소</button>
+        </div>
+
+    </main>
+
+    <script type="module">
+
+        // Firebase SDK 라이브러리 가져오기
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3ookWJ_UhcAQN3g_GFe8igPGrRhhSEPM",
+            authDomain: "object-4dce6.firebaseapp.com",
+            projectId: "object-4dce6",
+            storageBucket: "object-4dce6.appspot.com",
+            messagingSenderId: "1016569423981",
+            appId: "1:1016569423981:web:4742c10d53bc9ad4ef7764",
+            measurementId: "G-2ND0Q8WYC3"
+
+        };
+
+        // Firebase 인스턴스 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        //Query String - id 값 가져오기
+        const Keydata = new URLSearchParams(location.search).get('id');
+
+        //데이터 넘길 변수 (9개)
+        let name;
+        let mbti;
+        let pw;
+        let img;
+        let blog;
+        let github;
+        let word;
+        let intro;
+        let date;
+
+        let UploadFileUrl;
+
+        //DB에서 id 값에 맞는 특정 데이터 가져오기
+        const q = query(
+            collection(db, 'post'),
+            where('id', '==', Keydata)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        querySnapshot.forEach((el) => {
+
+            name = el.data().name;
+            mbti = el.data().mbti;
+            pw = el.data().pw;
+            img = el.data().img;
+            blog = el.data().blog;
+            github = el.data().github;
+            word = el.data().word;
+            intro = el.data().intro;
+            date = el.data().date;
+
+        });
+
+        //DB에서 가져온 데이터 화면에 보여주기
+        $('#name').val(name);
+        $('#mbti').val(mbti);
+        $('#img').attr('src', img);
+        $('#thumbnail').attr('src', img);
+        $('#blog').val(blog);
+        $('#github').val(github);
+        $('#word').val(word);
+        $('#intro').val(intro);
+        $('#date').val(date);
+
+        // 수정 버튼 클릭 시
+        $('#writeBtn').click(async function () {
+
+            if ($('#name').val() === "") {
+                alert("이름을 입력해주세요.")
+                return;
+            } else if ($('#mbti').val() === "") {
+                alert("MBTI를 입력해주세요.")
+                return;
+            } else if ($('#mbti').val() === "") {
+                alert("MBTI를 입력해주세요.")
+                return;
+            } else if (document.querySelector('img').src === "") {
+                alert("이미지를 입력해주세요.")
+                return;
+            } else if ($('#blog').val() === "") {
+                alert("블로그 주소를 입력해주세요.")
+                return;
+            } else if ($('#github').val() === "") {
+                alert("깃허브 주소를 입력해주세요.")
+                return;
+            } else if ($('#word').val() === "") {
+                alert("한마디를 입력해주세요.")
+                return;
+            } else if ($('#intro').val() === "") {
+                alert("자기소개를 입력해주세요.")
+                return;
+            }
+
+            // img 스토리지에 업로드 + Url링크 받아오기
+            let imgFile = document.querySelector('#img').files[0];
+
+            // 이미지를 다른 것을 선택하지 않았을 때
+            // Upload를 한번 더 하게 되면 물리적으로 실제로 있는 파일이 아니라
+            // 해당 URL 주소를 한번 더 업로드 하는 것이기 때문에
+            // 로직을 그대로 할려면 Image URL 을 File object 로 변경하는 작업이 한번 더 필요해서
+            // 이미지를 변경했을때와 이미지를 한번 더 변경하지 않을 경우를 나눠서 처리
+
+            if (imgFile === undefined) {
+
+                // 이미지를 변경하지 않을 때 : File Upload 로직 x, DB Update만 진행
+                let name_change = $('#name').val();
+                let mbti_change = $('#mbti').val();
+                let blog_change = $('#blog').val();
+                let github_change = $('#github').val();
+                let word_change = $('#word').val();
+                let intro_change = $('#intro').val();
+                let date_change = $('#date').val();
+
+                const postRef = doc(db, "post", Keydata);
+
+                await updateDoc(postRef, {
+
+                    name: name_change
+                    , mbti: mbti_change
+                    , blog: blog_change
+                    , github: github_change
+                    , word: word_change
+                    , intro: intro_change
+
+                });
+
+                // 페이지 벗어날 때 확인하지 않음
+                checkUnload = false;
+
+                alert('수정이 완료되었습니다.');
+                location.href = `./show.html?id=${Keydata}`;
+
+            } else { // else문 : File Upload 로직 o, DB Update도 같이 진행
+
+                const storageRef = ref(storage, `images/${Keydata}`)
+                const upload = uploadBytes(storageRef, imgFile).then((snapshot) => {
+
+                    getDownloadURL(snapshot.ref).then((url) => {
+
+                        UploadFileUrl = url;
+
+                    }).then(async () => {
+
+                        // 새로 입력된 데이터 저장
+                        let name_change = $('#name').val();
+                        let mbti_change = $('#mbti').val();
+                        let img_change = UploadFileUrl;
+                        let blog_change = $('#blog').val();
+                        let github_change = $('#github').val();
+                        let word_change = $('#word').val();
+                        let intro_change = $('#intro').val();
+                        let date_change = $('#date').val();
+
+
+                        const postRef = doc(db, "post", Keydata);
+
+                        await updateDoc(postRef, {
+
+                            name: name_change
+                            , mbti: mbti_change
+                            , img: img_change
+                            , blog: blog_change
+                            , github: github_change
+                            , word: word_change
+                            , intro: intro_change
+
+                        });
+
+                    });
+
+                    // 페이지 벗어날 때 확인하지 않음
+                    checkUnload = false;
+
+                    alert('수정이 완료되었습니다.');
+                    location.href = `./show.html?id=${Keydata}`;
+
+                })
+                    .catch((error) => {
+                        console.log(error);
+                    })
+
+            }
+
+        });
+
+        // 페이지 이동 시 체크
+        var checkUnload = true;
+        $(window).on("beforeunload", function () {
+            if (checkUnload) return "이 페이지를 벗어나면 수정된 내용은 저장되지 않습니다.";
+
+        });
+
+        // 취소버튼 클릭 시
+        $('#cancelBtn').click(async function () {
+            history.back();
+        })
+
+        // 사진 영역 클릭 시 img 불러오기
+        $("#thumbnail").on("click", function () {
+
+            $("#img").click().on("change", function (event) {
+
+                // 사진 선택 x
+                if (event.target.files.length == 0) {
+
+                    $("#thumbnail").removeAttr("src");
+
+                } else { // 사진 선택 o
+
+                    const file = event.target.files;
+
+                    var image = new Image();
+
+                    const ImageTempUrl = window.URL.createObjectURL(file[0]);
+
+                    $("#thumbnail").attr("src", ImageTempUrl);
+
+                    event.target.files.length = 0
+
+                }
+            })
+        });
+
+    </script>
+</body>
+
+</html>

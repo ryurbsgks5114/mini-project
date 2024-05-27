@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="./css/write.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+  <div class="show-header">
+    <button id="showEditBtn" class="show-header-editBtn">수정</button>
+    <button id="showDelBtn" class="show-header-deleteBtn">삭제</button>
+    <div id="headerModalEdit" class="show-header-modal">
+      <div>
+        <input type="password" placeholder="비밀번호를 입력해주세요" />
+      </div>
+      <div class="show-header-modal-flex">
+        <button id="editModalCancle" class="show-header-modal-cancle">취소</button>
+        <button id="editModalCheck" class="show-header-modal-check">확인</button>
+      </div>
+    </div>
+    <div id="headerModalDel" class="show-header-modal">
+      <div>
+        <input type="password" placeholder="비밀번호를 입력해주세요" />
+      </div>
+      <div class="show-header-modal-flex">
+        <button id="delModalCancle" class="show-header-modal-cancle">취소</button>
+        <button id="delModalCheck" class="show-header-modal-check">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <div class="write-flex">
+      <div class="write-container">
+        <label for="name">이름</label>
+        <input id="name" class="write-container-space250" readonly />
+      </div>
+
+      <div class="write-container side-margin50">
+        <label for="mbti">MBTI</label>
+        <input id="mbti" class="write-container-space130" readonly />
+      </div>
+    </div>
+
+    <div class="show-container-img">
+      <label for="img">사진</label>
+      <div class="show-container-thumbnail">
+        <img id="thumbnail" alt="..." src="" />
+      </div>
+    </div>
+
+    <div class="write-container">
+      <label for="blog">블로그 주소</label>
+      <input id="blog" class="write-container-space500" readonly />
+    </div>
+
+    <div class="write-container">
+      <label for="github">깃허브 주소</label>
+      <input id="github" class="write-container-space500" readonly />
+    </div>
+
+    <div class="write-container">
+      <label for="word">한마디</label>
+      <input id="word" class="write-container-spaceAll" readonly />
+    </div>
+
+    <div class="show-container">
+      <label for="intro">자기소개</label>
+      <div id="intro" class="show-intro"></div>
+    </div>
+  </main>
+
+  <div id="scroll" class="scroll-icon">
+    <img alt="..." src="./svg/chevron-up-solid.svg" />
+  </div>
+
+  <section class="section-reply">
+    <div class="section-reply-container">
+      <div class="section-reply-container-flex">
+        <div>
+          <label for="replyName" class="section-reply-lable1">이름</label>
+          <input id="replyName" type="text" placeholder="이름" />
+          <label for="replyPW" class="section-reply-lable2">비밀번호</label>
+          <input id="replyPW" type="password" placeholder="비밀번호" />
+        </div>
+        <div>
+          <label for="comment" class="section-reply-lable1">댓글</label>
+          <textarea id="comment" placeholder="댓글을 입력해주세요"></textarea>
+        </div>
+      </div>
+      <div class="section-reply-container-btn">
+        <button id="registrationBtn" class="section-reply-container-btn-add">등록하기</button>
+      </div>
+    </div>
+
+    <ul id="replyList" class="section-reply-list"></ul>
+  </section>
+
+  <script type="module">
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, doc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB3ookWJ_UhcAQN3g_GFe8igPGrRhhSEPM",
+      authDomain: "object-4dce6.firebaseapp.com",
+      projectId: "object-4dce6",
+      storageBucket: "object-4dce6.appspot.com",
+      messagingSenderId: "1016569423981",
+      appId: "1:1016569423981:web:4742c10d53bc9ad4ef7764",
+      measurementId: "G-2ND0Q8WYC3"
+    };  
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    function getDateFormat() {
+
+      let now = new Date();
+      let year = now.getFullYear();
+      let month = now.getMonth() + 1 < 10 ? `0${now.getMonth() + 1}` : now.getMonth() + 1;
+      let date = now.getDate() < 10 ? `0${now.getDate()}` : now.getDate();
+      let hours = now.getHours() < 10 ? `0${now.getHours()}` : now.getHours();
+      let min = now.getMinutes() < 10 ? `0${now.getMinutes()}` : now.getMinutes();
+      let sec = now.getSeconds() < 10 ? `0${now.getSeconds()}` : now.getSeconds();
+      let today = `${year}-${month}-${date}`;
+      let id = `${year}${month}${date}${hours}${min}${sec}`;
+
+      return [today, id];
+    }
+
+    const postID = new URLSearchParams(location.search).get("id");
+
+    $("#scroll").on("click", function () {
+      window.scrollTo(0, 0);
+    });
+
+    const show = query(
+      collection(db, "post"), 
+      where("id", "==", postID)
+    );
+    let postData = await getDocs(show);
+
+    postData.forEach( (el) => {
+
+      let data = el.data();
+
+      $("#name").val(data.name);
+      $("#mbti").val(data.mbti);
+      $("#thumbnail").attr("src", data.img);
+      $("#blog").val(data.blog);
+      $("#github").val(data.github);
+      $("#word").val(data.word);
+      $("#intro").text(data.intro);
+
+    });
+
+    $("#showEditBtn").on("click", function () {
+      console.log("edit")
+      $("#headerModalEdit").show();
+      $("#showEditBtn").attr("disabled", true);
+      $("#showDelBtn").attr("disabled", true);
+    });
+
+    $("#showDelBtn").on("click", function () {
+      console.log("del")
+      $("#headerModalDel").show();
+      $("#showDelBtn").attr("disabled", true);
+      $("#showEditBtn").attr("disabled", true);
+    });
+
+    $("#editModalCancle").on("click", function () {
+      $("#headerModalEdit").hide();
+      $("#showEditBtn").attr("disabled", false);
+      $("#showDelBtn").attr("disabled", false);
+    });
+
+    $("#delModalCancle").on("click", function () {
+      $("#headerModalDel").hide();
+      $("#showDelBtn").attr("disabled", false);
+      $("#showEditBtn").attr("disabled", false);
+    });
+
+    $("#editModalCheck").on("click", async function () {
+
+      let postPW = $("#headerModalEdit input").val();
+
+      if (!postPW) {
+        alert("비밀번호를 입력해주세요");
+
+        return
+      }
+
+      let check = false;
+      const q = query(
+        collection(db, "post"),
+        where("id", "==", postID),
+        where("pw", "==", postPW)
+      );
+      let result = await getDocs(q);
+
+      result.forEach( (el) => {
+        if (el.data()) {
+          check = true;
+        }
+      });
+
+      if (!check) {
+        alert("비밀번호가 일치하지 않습니다");
+
+        return
+      }
+
+      location.href = `./modify.html?id=${postID}`;
+
+    });
+
+    $("#delModalCheck").on("click", async function () {
+      
+      let postPW = $("#headerModalDel input").val();
+
+      if (!postPW) {
+        alert("비밀번호를 입력해주세요");
+
+        return
+      }
+
+      let check = false;
+      const q = query(
+        collection(db, "post"),
+        where("id", "==", postID),
+        where("pw", "==", postPW)
+      );
+      let result = await getDocs(q);
+
+      result.forEach( (el) => {
+        if (el.data()) {
+          check = true;
+        }
+      });
+
+      if (!check) {
+        alert("비밀번호가 일치하지 않습니다");
+
+        return
+      }
+
+      await deleteDoc(doc(db, "post", postID));
+
+      location.href = "./index.html";
+
+    })
+    const q = query(
+      collection(db, "reply"),
+      where("postID", "==", postID),
+      orderBy("id")
+    );
+    let replyList = await getDocs(q);
+
+    replyList.forEach( (el) => {
+
+      let data = el.data();
+
+      let html = `<li id=${data.id}>
+        <div class="section-reply-list-container">
+          <div class="section-reply-list-container-flex">
+            <div class="section-reply-list-name">${data.name}</div>
+            <span class="side-margin5">·</span>
+            <div class="section-reply-list-date">${data.date}</div>
+            <button type="button">삭제</button>
+          </div>
+          <div class="section-reply-list-content">
+            ${data.comment}
+          </div>
+          <div class="show-reply-modal">
+            <div>
+              <input type="password" placeholder="비밀번호를 입력해주세요" />
+            </div>
+            <div class="show-reply-modal-flex">
+              <button class="show-reply-modal-cancle">취소</button>
+              <button class="show-reply-modal-check">확인</button>
+            </div>
+          </div>
+        </div>
+      </li>`;
+
+      $("#replyList").append(html);
+
+    });
+
+    $("#registrationBtn").on("click", async function () {
+
+      let name = $("#replyName").val();
+      let pw = $("#replyPW").val();
+      let comment = $("#comment").val();
+
+      if (!name || !comment || !pw) {
+        alert("이름, 비밀번호, 댓글을 모두 입력해주세요");
+
+        return
+      }
+
+      let [date, id] = getDateFormat();
+      let data = {
+        "id": id,
+        "pw": pw,
+        "name": name,
+        "comment": comment,
+        "date": date,
+        "postID": postID
+      };
+
+      await setDoc(doc(db, "reply", id), data);
+
+      let html = `<li id=${data.id}>
+        <div class="section-reply-list-container">
+          <div class="section-reply-list-container-flex">
+            <div class="section-reply-list-name">${data.name}</div>
+            <span class="side-margin5">·</span>
+            <div class="section-reply-list-date">${data.date}</div>
+            <button type="button">삭제</button>
+          </div>
+          <div class="section-reply-list-content">
+            ${data.comment}
+          </div>
+          <div class="show-reply-modal">
+            <div>
+              <input type="password" placeholder="비밀번호를 입력해주세요" />
+            </div>
+            <div class="show-reply-modal-flex">
+              <button id="replyModalCancle" class="show-reply-modal-cancle">취소</button>
+              <button id="replyModalCheck" class="show-reply-modal-check">확인</button>
+            </div>
+          </div>
+        </div>
+      </li>`;
+
+      $("#replyList").append(html);
+      $("#replyName").val("");
+      $("#replyPW").val("");
+      $("#comment").val("");
+
+      $("#replyList > li div.section-reply-list-container-flex > button").on("click", function () {
+        $(this).parent().parent().find(".show-reply-modal").show();
+        $("#replyList > li div.section-reply-list-container-flex > button").attr("disabled", true);
+
+        $(this).parent().parent().find(".show-reply-modal > div.show-reply-modal-flex > button.show-reply-modal-cancle").on("click", function () {
+          $(this).parent().parent().hide();
+          $("#replyList > li div.section-reply-list-container-flex > button").attr("disabled", false);
+        });
+
+        $(this).parent().parent().find(".show-reply-modal > div.show-reply-modal-flex > button.show-reply-modal-check").on("click", async function () {
+
+          let pw = $(this).parent().parent().find("input").val();
+          let id = $(this).parent().parent().parent().parent().attr("id");
+
+          if (!pw) {
+            alert("비밀번호를 입력해주세요");
+
+            return
+          }
+
+          let check = false;
+          const q = query(
+            collection(db, "reply"),
+            where("id", "==", id),
+            where("pw", "==", pw)
+          );
+          let result = await getDocs(q);
+
+          result.forEach((el) => {
+            if (el.data()) {
+              check = true;
+            }
+          });
+
+          if (!check) {
+            alert("비밀번호가 일치하지 않습니다");
+
+            return
+          }
+
+          await deleteDoc(doc(db, "reply", id));
+          $(this).parent().parent().parent().parent().remove();
+
+        });
+
+      });
+
+    });
+
+    $("#replyList > li div.section-reply-list-container-flex > button").on("click", function () {
+      $(this).parent().parent().find(".show-reply-modal").show();
+      $("#replyList > li div.section-reply-list-container-flex > button").attr("disabled", true);
+
+      $(this).parent().parent().find(".show-reply-modal > div.show-reply-modal-flex > button.show-reply-modal-cancle").on("click", function () {
+        $(this).parent().parent().hide();
+        $("#replyList > li div.section-reply-list-container-flex > button").attr("disabled", false);
+      });
+
+      $(this).parent().parent().find(".show-reply-modal > div.show-reply-modal-flex > button.show-reply-modal-check").on("click", async function () {
+
+        let pw = $(this).parent().parent().find("input").val();
+        let id = $(this).parent().parent().parent().parent().attr("id");
+
+        if (!pw) {
+          alert("비밀번호를 입력해주세요");
+
+          return
+        }
+
+        let check = false;
+        const q = query(
+          collection(db, "reply"),
+          where("id", "==", id),
+          where("pw", "==", pw)
+        );
+        let result = await getDocs(q);
+
+        result.forEach((el) => {
+          if (el.data()) {
+            check = true;
+          }
+        });
+
+        if (!check) {
+          alert("비밀번호가 일치하지 않습니다");
+
+          return
+        }
+
+        await deleteDoc(doc(db, "reply", id));
+        $(this).parent().parent().parent().parent().remove();
+
+      });
+
+    });
+
+  </script>
+</body>
+
+</html>
